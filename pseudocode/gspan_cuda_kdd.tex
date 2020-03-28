@@ -1,0 +1,117 @@
+\documentclass{sigkddExp}
+\usepackage{a4wide}
+\usepackage{graphicx}
+\usepackage{setspace}
+
+\usepackage{grffile}
+\usepackage{tabularx}
+%\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{latexsym}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsfonts}
+\usepackage{latexsym}
+\usepackage{amsfonts}
+
+\usepackage{amssymb}
+\usepackage{tikz}
+
+\usepackage{gspan}
+\usepackage{grph_db}
+\usepackage{multirow}
+%\usepackage[usenames,dvipsnames,svgnames]{xcolor}
+
+
+\newtheorem{definition}{Definition}[section]
+
+
+\algsetup{linenodelimiter=}
+\newfloat{method}{h}{lom}
+\floatname{method}{Method}
+
+
+\def\CALL#1{\textsc{#1}}
+
+
+\begin{document}
+\title{Graph Mining with GPU}
+
+\numberofauthors{2}
+
+\author{
+\alignauthor Robert Kessl \\
+       \affaddr{Czech Technical University in Prague}\\
+       \affaddr{Prague, Czech Republic}\\
+       \email{kesslr@centrum.cz}
+\alignauthor {Nilothpal Talukder, Pranay Anchuri, Mohammed J. Zaki}\\
+%       \affaddr{Dept. of Computer Science}\\
+       \affaddr{Rensselaer Polytechnic Institute}\\
+       \affaddr{Troy, New York 12180}\\
+       \email{\{talukn,anchupa,zaki\}@cs.rpi.edu}
+}
+
+\date{30 July 1999}
+\maketitle
+
+\begin{abstract}
+This paper describes GPU based solution of the popular graph mining algorithm gSpan.
+\end{abstract}
+
+
+\input{intro.tex}
+\input{basic_notion.tex}
+\input{graph_mining.tex}
+\input{embedding_storage.tex}
+\input{computing_extensions.tex}
+\input{support_computation.tex}
+\input{grph_db_example.tex}
+\input{discussion.tex}
+
+\if0
+\section{Introduction}
+
+\section{Related Work}
+
+\section{Preliminaries}
+\subsection{Definitions}
+\subsection{Notations}
+
+\section{Graph Mining}
+\subsection{The gSpan Algorithm}
+\subsection{Parallel Graph Mining with GPU (outline)}
+\subsection{GPU and Parallel Primitives}
+
+
+\section{Data Structures}
+\subsection{Storage of Embeddings}
+
+\section{Graph Mining with GPU}
+\subsection{Compute Extensions}
+\subsection{Compute Support}
+\subsection{Putting it altogether}
+
+\section{Experiments}
+\section{Discussions}
+\section{Conclusions}
+
+%ACKNOWLEDGEMENTS are optional
+\section{Acknowledgements}
+\fi
+
+\bibliographystyle{abbrv}
+\bibliography{papers}  % sigproc.bib is the name of the Bibliography in this case
+% You must have a proper ".bib" file
+%  and remember to run:
+% latex bibtex latex latex
+% to resolve all references
+%
+% ACM needs 'a single self-contained file'!
+%
+%APPENDICES are optional
+% SIGKDD: balancing columns messes up the footers: Sunita Sarawagi, Jan 2000.
+% \balancecolumns
+%\appendix
+
+% That's all folks!
+\end{document}

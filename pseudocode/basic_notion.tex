@@ -1,0 +1,58 @@
+\section{Basic notion}
+In order to make notation clear, we will make difference between these
+two symbols: $\subseteq$ and $\subsetneq$. Let $A,B$ be arbitrary
+sets. $A\subseteq B$ means that subset with the possibility of $A=B$.
+While $A\subsetneq B$ means strict subset, i.e., $A\neq B$.
+
+\bigskip
+
+\noindent Notation:\par
+\begin{tabular}{lp{13cm}}
+$\thread_i$                     &  threads                  \\ 
+$\V=\{\vrtx_i\}$                     & set of vertices $\vrtx_i$, the vertices are represented by numbers $1, \ldots, |\V|$  \\
+$\E=\{\edge_i\}\subseteq \V\times \V$          & set of eges     \\
+$\G=(\V, \E)$                       & a graph                   \\
+%$l_i, l_{ij}$                    & \\
+$\G_1\subgrphisoeq \G', \G_2\subgrphisoneq \G'$               & graph $\G_1$ is subgraph isomorphic with $\G'$ or $\G_2$ is strictly subgraph isomorphic with $\G'$, i.e., $\G_2\neq \G'$  \\
+$\pattern$                       & a graph that is a pattern \\
+$c_i=(\vrtx_i, \vrtx_j, \lbl_i, \lbl_{ij}, \lbl_j)$  &  5-tuple description of edge; single element of a DFS code \\
+%$\dfscode(\G)=(c_1,\ldots, c_n)$     &  a canonical code  of a graph $\G$  \\
+$\mindfscode(\G)$                       & minimal (canonical) DFS code of a graph $\G$ \\
+$\embed(\G,\G'), \G\subgrphisoeq \G'$    & the set of all embeddings of a graph $\G$ in $\G'$ \\
+$\extend(\G,\G'), \G\subgrphisoeq \G'$     & is the set of extensions of the graph $\G$ from the right-most path of $\mindfscode(\G)$ in the graph $\G'$\\
+$\extend_{\db}(\G)=\bigcup_{\G'\in\db}\extend(\G, \G')$       & set of all extensions of the right-most path of $\mindfscode(\G)$ of graphs in $\db$ \\
+$\db=\{\G_i\}$           & the database of graphs \\
+$\embedcol_i$            & $i$-th embedding column containing elements $(idx,vid)$ \\
+$\neigharray, \neighoffsetarray, \elabelarray, \vlabelarray$   & neighborhood array, neighborhood offset array, vertex label array \\
+$\rmpath$                & is the set of indices into $\mindfscode(\G)$ describing the edges on the right-most path \\
+$\rmpath^{GPU}$           & is the set of vertex ids of pattern $\pattern$ on the right-most path \\
+$\extensionarray$        & an array containing information of possible extensions \\
+\end{tabular}
+
+\bigskip
+
+\notacmnt{robert}{Array should be typeset using math bold font, e.g.,
+  $\mathbf{L}$. Sets should be typeset using calligraphic font, e.g.,
+  $\mathcal{L}$ or its specific notation, e.g., $\extend_{\db}(\G)$.}
+
+\bigskip
+
+\notacmnt{robert}{Use typewriter for fields in arrays, e.g., $\extensionarray[i].\texttt{row}$}
+
+\bigskip
+
+\bigskip
+
+\notacmnt{robert}{Arrays are always indexed from \textbf{0} !!!!}
+
+\bigskip
+
+
+The GSpan algorithm, and its variants, works by depth-first search expanding of the pattern adding
+edge-by-edge and checking the minimality of the pattern DFS code. 
+
+\notacmnt{robert}{We have to add the following notation:  1) extension array; 2) labels of edges and vertices; 3)}
+
+\bigskip
+
+

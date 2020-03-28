@@ -1,0 +1,7 @@
+*.dat
+*.sdf
+sdfconvert
+objs
+*.out
+nscids
+objids

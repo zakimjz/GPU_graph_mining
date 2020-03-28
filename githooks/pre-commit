@@ -1,0 +1,39 @@
+#!/bin/bash
+
+
+
+#FILES=$(git diff-index HEAD | awk '{ if($5 != "D" && ($6 ~ ".cpp$" || $6 ~ ".hpp$")) { print $6; } }')
+FILES=$(git diff --name-only --cached | grep ".cpp$\|.hpp$")
+
+CFGFILE=`pwd`/format_src.cfg
+
+if [ ! -f ${CFGFILE} ] ; then
+    echo "fix the pre-commit script, uncrustify commit script missing"
+fi
+
+for f in $FILES ; do
+    echo "checking ${f}";
+    if [ ! -f $f ] ; then
+	echo "error while processing file: $f"
+	echo "see output of this command: git diff-index HEAD | awk '{ if(\$5 != \"D\" && (\$6 ~ \".cpp\$\" || \$6 ~ \".hpp\$\")) { print \$6; } }'"
+    fi
+
+    TMPFILE=$(git checkout-index --temp ${f} | awk '{print $1; }')
+
+    uncrustify -c $CFGFILE -l CPP < ${TMPFILE} 2>/dev/null | diff - $f 1>/dev/null  2>&1
+
+    if [ "x$?" != "x0" ] ; then
+	echo "!!! Indent the sources before commiting !!!"
+	echo "unformatted file: $f"
+	rm -rf ${TMPFILE}
+	exit 1;
+    fi
+
+    rm -rf ${TMPFILE}
+    #echo ${TMPFILE}
+done
+
+echo "sources formatted ... commiting"
+
+exit 0;
+

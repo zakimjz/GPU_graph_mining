@@ -1,0 +1,50 @@
+IMPORTANT FILES:
+
+ + globals: package containing datastructures and general purpose code.
+   - dbio.hpp: look at it, it is obvious what these functions does.
+   - graph_types.hpp: contains the definition of graph_database_t and Vertex/Edge.
+   - dfs_code.hpp: contains the definition of the DFSCode.
+          DFSCode::toGraph(Graph &)
+          const RMPath &buildRMPath();
+          bool dfs_code_is_min() const;
+   - embedding_lists.hpp: contains definition of the embedding lists (as we drawn then on the whiteboard).
+   - cuda_graph_types.hpp: contains definition of graph_database_cuda.
+           the PURPOSE of this class is to store the graph database (graph_database_t) in the array format (i.e., format
+           suitable for usage on the device). The class takes one parameter: bool that says whether the data are stored
+           on host or on device. This state is immutable. Further see methods:
+           void copy_to_device(graph_database_cuda *device_gdb);
+           void copy_from_device(graph_database_cuda *device_gdb);
+           void delete_from_host();
+           void delete_from_device();
+           USAGE: you always have two kind of variables: graph_database_cuda h_gdb(true), d_gdb(false);
+           for copying use copy*. For conversion from graph_database_t use graph_database_cuda::create_from_host_representation(graph_database_t &).
+           see src/globals/tests/convert_to_device_test.cpp
+
+ + cuda_pp: package containing all cuda parallel primitives that are
+            taken (and modified) from the NVidia SDK. 
+    further look into these files:
+   - kernel_execution.hpp
+   - cuda_tools.hpp
+   - cuda_computation_parameters.hpp
+
+
+LOGGER:
+--------------
+for usage of logger look into the globals/logger_sample.cpp
+
+The logger supports multiple loggers, logging into a file/stdout. It
+supports setting of the log level from the command line using the
+environment varibale LOG_LEVEL= [NFO|DBG|TRC|TRC1|D|T|T4|...] see
+logger.hpp.
+
+Setting the output stream buffer is done using 
+static void set_global_streambuf(streambuf *buf, bool set_to_loggers = false);
+
+the argument set_to_loggers allows to set the stream buffer to all existing loggers.
+
+at the end of usage it is good to call Logger::free_loggers();
+
+the logger is directed at compile time using the macros LOG_INFO, LOG_DEBUG, LOG_TRACE.
+
+
+

@@ -1,0 +1,70 @@
+\def\tblextensionarray{
+\begin{tabular}{|*{6}{c|}|*{4}{c|}} \hline
+ &\multicolumn{5}{c||}{0}     &\multicolumn{4}{c|}{1} \\ \hline
+ & 6 & 7 & 12 & 16 & 17   & 8 & 9 & 13 & 17 \\ 
+ & B & B &  C &  C &  E   & E & E &  D &  E \\ \hline \hline
+%&   &   &    &    &      &   &   &    &    \\
+$\mathbf{F}_\G$         & 0  & 1  &  1  &  0  &  0    & 0  & 1  &  1  &  0 \\
+scanned $\mathbf{F}_\G$ & 0  & 0  &  1  &  2  &  2    & 0  & 0  &  1  &  2  \\  \hline
+%                       &   &   &    &    &      &   &   &    &    \\
+%                       &   &   &    &    &      &   &   &    &    \\
+\end{tabular}
+}
+
+\def\tblextsupports{
+\begin{tabular}{|*{3}{c|}|*{3}{c|}|*{3}{c|}|*{3}{c|}|*{3}{c|}|} \hline
+\multicolumn{3}{|c||}{$(0,B)$} & \multicolumn{3}{c||}{$(0,C)$} & \multicolumn{3}{c||}{$(0,E)$} & \multicolumn{3}{c||}{$(1,E)$} & \multicolumn{3}{c||}{$(1,D)$} \\ \hline
+1 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 1 & 0 & 1 & 0 & 1 & 0 \\ \hline
+\multicolumn{3}{|c||}{1} & \multicolumn{3}{c||}{1} & \multicolumn{3}{c||}{1} & \multicolumn{3}{c||}{2} & \multicolumn{3}{c||}{2} \\ \hline
+\end{tabular}
+}
+
+
+\def\tblembeddings{
+\begin{tabular}{|c|c|} \hline
+\texttt{idx}   & \texttt{vid}   \\ \hline
+-1  & 0   \\ \hline
+-1  & 5   \\ \hline
+-1  & 5   \\ \hline
+-1  & 10  \\ \hline
+-1  & 18  \\ \hline
+\end{tabular}
+\begin{tabular}{|c|c|} \hline
+\texttt{idx}   & \texttt{vid}   \\ \hline
+0 & 1  \\ \hline
+1 & 6  \\ \hline
+2 & 7  \\ \hline
+3 & 11 \\ \hline
+4 & 15 \\ \hline
+\end{tabular}
+\begin{tabular}{|c|c|} \hline
+\texttt{idx}   & \texttt{vid}   \\ \hline
+1 & 8  \\ \hline
+2 & 9  \\ \hline
+4 & 17 \\ \hline
+\end{tabular}
+}
+
+
+\begin{figure*}
+\centering
+\hrule
+%\begin{center}
+%\grphA 
+\hbox to \hsize{\hfill\grphA\grphB\grphC\grphD\hfill}
+%\end{center}
+
+\bigskip
+
+\begin{tabular}{cc}
+
+Extensions:                                                                          & Embeddings:  \\
+\tiny\tblextensionarray                                                              &  \multirow{3}{*}{\tiny\tblembeddings}  \\
+Support computation:    &         \\
+\tiny\tblextsupports                                                                 &         \\
+\end{tabular}
+
+\caption{Example of embeddings of the pattern $\pattern=(0,1,A,-,B)(1,2,B,-,E)$. Extensions of $\pattern$ are: $(0,B)$, $(0,C)$, $(0,E)$, $(1,E), (1,D)$.}
+\hrule
+\end{figure*}
+

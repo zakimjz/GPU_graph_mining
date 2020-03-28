@@ -1,0 +1,187 @@
+\section{Datastructures and its storage in global memory}\label{sec:datastructures}
+
+
+
+\noindent\textbf{Storage of database:} To store $\db$ in the GPU
+global memory, we need to serialize $\db$. In the algorithm, we need
+to map the vertices to graphs and we need to quickly lookup
+neighborhood of each vertex.  Therefore, each vertex in the
+$\db=\{(\V_i,\E_i)\}$ has a unique number that identifies the vertex
+in the whole database, called \emph{vertex global id}. Therefore, we
+consider the whole database as one large graph $\G^{\db}=(\V^\db,
+\E^\db)$. We compute $m_{\V} = \max_i|\V_i|, \G_i=(\V_i,\E_i) \in \db$
+and vertices of the $k$-th graph are re-numbered so they lie in the
+interval $[k\cdot m_{\V}, (k+1)\cdot m_{\V})$. The label of vertex
+  $\vrtx_i$ with \emph{vertex global id} $i$ is stored at position $i$
+  in an array $\vlabelarray$ of size $|\db|\cdot m_{\V}$ as a
+  non-negative number. If the vertex does not exists, we use -1. The
+  neighborhood of a vertex (i.e., edges) is stored in an array
+  $\neigharray$, each $\neigharray[i]$ is the \emph{global vertex
+    id}. The edge labels are stored in the array $\elabelarray$ of the
+  size $|\neigharray|$. The offsets into the $\neigharray$ are stored
+  in an array $\neighoffsetarray$ of the size $|\vlabelarray|$. The
+  elements representing invalid vertices are filled with -1.
+
+
+\noindent\textbf{Storage of embeddings:} One pattern $\pattern$ can be
+located at many positions in one graph $\G\in \db$.  One embedding of
+a pattern in a graph is in fact a list of edges $(\edge_{i_1}, \ldots,
+\edge_{i_{|\E|}})$ that matches those in $\mindfscode(\pattern) =
+(c_1,\ldots, c_{|E|})$, i.e., $\edge_{i_1}$ matches $c_1$, etc. Each
+$c_i$ is a five-tuple $(\vrtx_i, \vrtx_j, \lbl_i, \lbl_e, \lbl_j)$,
+where $\vrtx_i$($\vrtx_j$) are the starting (ending) vertices of the
+edge in the \emph{pattern vertex numbering}. $\lbl_i, \lbl_e, \lbl_j$
+are the labels of $\vrtx_i$, edge, $\vrtx_j$. The embeddings are,
+however, the edges in the \emph{database vertex numbering}. We store
+the embeddings not using edges, but vertices. To store pattern
+embeddings with one edge, we need to store two vertices. We store them
+in two columns $\embedcol_0, \embedcol_1$.  Each element in the column
+contains a pair $(\texttt{idx}, \texttt{vid})$. The $\texttt{idx}$ is
+an index to the previous column and the $vid$ is the \emph{global
+  vertex id}. The $\texttt{idx}$ of $\embedcol_0[i]$ contains -1, for
+$\embedcol_1[i]$ the $\texttt{idx}=i$. For storing additional edge, we
+need to add only one column $\embedcol_3$. The reason is that the one
+vertex of the new edge must always be present in the embeddings. Let
+the first edge with vertices $\embedcol_0[0].\texttt{vid}$ and
+$\embedcol_1[0].\texttt{vid}$ have $n$ possible extensions (that are
+vertices). We create a new embedding column $\embedcol_3$ that
+contains in $vid$ of elements at position $0,\ldots n-1$ the new
+vertex ids. The extensions of the second edge, described by
+$\embedcol_0[1], \embedcol_1[1]$, are stored in $\embedcol_2$ starting
+position $n$, etc. Each column then has different length and in fact
+it represent many linked lists.  Storing the $gid$ in each column is
+not necessary: we have global vertex ids. The total number of
+embeddings is given by the size of the $k$-th column. The edge
+structure is hold in the pattern DFS code.
+
+
+Let the pattern has $k$ vertices. We can reconstruct one particular
+embedding by following the links from the last column, the $(k-1)-$th
+column, at one particular element into the previous column $k-2$ and
+take a look at the $\texttt{idx}$-th element and again follow its
+$\texttt{idx}$, etc.,
+
+\if0
+However, the edges $\edge_i$ are described in the terms of the graph
+$\G$, meaning that the incidence vertices of $\edge_i$ are the
+vertices in $\V$. That is: we have one such a list for one embedding
+of the pattern $\pattern$. Each $\G\in \db$ can contain many
+embeddings.
+
+The pattern $\pattern$ is then extended by one kind of edges with
+label $l_e$ with the incident vertex label $l_v$. There can be many
+such edges with such properties, let say there are $n$ such possible
+extending edges $e'_1,\ldots, e'_n$, forming pattern $\pattern'$ with
+code $\mindfscode(\pattern') = (c_1,\ldots, c_{|\E|},
+c_{|\E|+1}), c_{|\E|+1}=(\vrtx_i, \vrtx_j, \lbl_i, \lbl_e,
+\lbl_v)$. However, in the terms of embeddings, we have $n$ new
+embeddings, i.e., $(\edge_1, \ldots, \edge_{|\E|}, \edge'_{\ell}),
+1\leq \ell\leq n$. 
+
+
+These embeddings can be stored in the following way: we store the
+vertices of the edges in columns. Each element in $i$-th column has the
+form: $(idx, vid)$. Where $idx$ is the index pointing to element in
+previous column $i-1$, $vid$ is the id of the vertex. If we look into
+the last column, let say $n$-th column, at one particular element and
+follow its ``link'' idx into previous column $n-1$ and take a look at
+the $idx$-th element and again follow its $idx$, etc., we reconstruct
+the vertices that forms the embedding. Each column then has different
+length and in fact it represent many linked lists.  Storing the $gid$ in
+each column is not necessary. It may be possible to store the $gid$
+just for last column and update the array of $gid$'s while backtracing
+the DFS search through the search space.  The ``linked list'' has the
+advantage of sharing ``prefixes'' in the embeddings and therefore
+memory reduction.
+\fi
+
+
+\if0
+
+The pseudocode follows:
+
+\begin{algorithm}[!htb]
+\caption{Pseudocode of the support computation for edges on GPU}
+\vbox{\textsc{GetCodeExtensions-Gaston}(\vtop{\noindent Database $\db$, 
+                                          \par\noindent Canonical code $\mindfscode$,
+                                          \par\noindent Embeddings $\embeddings$,
+                                          \par\noindent Right-most path $\rmpath=(\rmpathelem_1, \ldots, \rmpathelem_x)$)}}
+\begin{algorithmic}[1]
+  \REQUIRE $\embeddings = (\embed_0, \embed_1, \ldots, \embed_{|\mindfscode|})$. The $\embed_0$ is the
+  first node(the root) in the description of the embedding. Each
+  element in column $\embed_i$ has to form $(idx, vid, gid)$. The column
+  $\embed_n$ therefore works as the head of a single linked list of
+  vertices. 
+  \STATE all states for each element in each $\embed_i$ is set to $0$.
+  \FORPARALLEL{all threads $\thread_i, 1\leq i \leq |\embed_n|$}
+     \STATE each thread follows all elements in the linked list
+     starting at $i$-th position in $\embed_n$ and set state to $1$.
+     \STATE parallel-reduce the 1's in each column forming the number
+     of active elements in column $i$, denoted by $T_i$.
+  \ENDFOR
+  \STATE allocate array $E_{\text{offsets}}$ in device-memory of size $\sum_{i\in \embeddings} T_i+1$ ints.
+  \FORPARALLEL{all threads $t_i, 0\leq i < T=\sum_{i\in \embeddings} T_i$ threads}
+     \STATE compute which element $i$ in which column $c\in\embeddings$ should be processed.
+     \STATE read degree of vertex $v$ at position $i$ in column $c$.
+     \STATE compute how many edges of $v$ can be used as extensions, denoted by $d$.
+     \STATE $E_{\text{offsets}}[i]\leftarrow d$.
+     \STATE perform exclusive scan of $E_{\text{offsets}}$ and fill
+     $E_{\text{offsets}}[T+1]$ by the total sum of the elements
+     $\sum^{T}_{i=0} E_{\text{offsets}}[i]$.
+  \ENDFOR
+  \STATE allocate array $E_{\text{data}}$ in device-memory of size $E_{\text{offsets}}[T+1]$.
+  \STATE allocate the array $E_{out}$.
+  \FORPARALLEL{all threads $t_i, 0\leq i < T=\sum_i T_i$ threads}
+     \STATE compute which element $i$ in which column $c$ should be processed, the vertex is denoted by $v$.
+%     \STATE $k_1\leftarrow E_{\text{offsets}}[i], k_2\leftarrow E_{\text{offsets}}[i+1]$
+     \STATE store at positions $E_{\text{offsets}}[i], \ldots,
+            E_{\text{offsets}}[i+1]-1$ in the array $E_{\text{data}}$ the
+            possible extensions of vertex $v$ (label of both vertices and
+            edge).
+     \STATE sort the array $E_{\text{data}}$.
+     \STATE compute the support of each extension in $E_{\text{data}}$ and store it into an array $E_{out}$.
+  \ENDFOR
+  \STATE deallocate the memory.
+\end{algorithmic}
+\end{algorithm}
+
+
+
+\begin{algorithm}[!htb]
+\caption{Pseudocode of the support computation for edges on GPU}
+\vbox{\textsc{GetCodeExtensions-Naive}(\vtop{\noindent Database $\db$, 
+                                         \par\noindent Canonical code $\mindfscode$,
+                                         \par\noindent Embeddings $\embeddings$,
+                                         \par\noindent Right-most path $\embeddings=(\embed_1,\ldots, \embed_x)$)}}
+\begin{algorithmic}[1]
+  \REQUIRE $Q$ is a matrix of size $|\mindfscode|\times|\text{embeddings}|$. Each row of $Q$ represents one embedding.
+  \STATE allocate array $E_{\text{offsets}}$ in device-memory of size $|R|\times |\text{embeddings}|$ ints.
+  \FORPARALLEL{all threads $t_i, 0\leq i < |R|\times |\text{embeddings}|$ threads}
+       \STATE each thread is assigned to one element $(x,y)$ such that
+              $i = |R|\times y + x$ in the $|R|\times |\text{embeddings}|$
+              submatrix.
+       \STATE look at the neighborhood of vertex at position $(x,y)$, and select the edges that should be processed. The number of such edges is $d$.
+       \STATE store $d$ at $E_{\text{offsets}}[i]$
+       \STATE perform exclusive scan of $E_{\text{offsets}}$ and fill
+              $E_{\text{offsets}}[T+1]$ by the total sum of the elements
+              $\sum^{T}_{i=0} E_{\text{offsets}}[i]$.
+  \ENDFOR
+  \STATE allocate array $E_{\text{data}}$ in device-memory of size $E_{\text{offsets}}[T+1]$.
+  \STATE allocate the array $E_{out}$.
+  \FORPARALLEL{all threads $t_i, 0\leq i < T=\sum_i T_i$ threads}
+     \STATE compute which element $i$ in which column $c$ should be processed, the vertex is denoted by $v$.
+     \STATE store at positions $E_{\text{offsets}}[i], \ldots,
+            E_{\text{offsets}}[i+1]-1$ in the array $E_{\text{data}}$ the
+            possible extensions of vertex $v$ (label of both vertices and
+            edge).
+     \STATE sort the array $E_{\text{data}}$.
+     \STATE compute the support of each extension in $E_{\text{data}}$ and store it into an array $E_{out}$.
+  \ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+
+\fi
+
+
+

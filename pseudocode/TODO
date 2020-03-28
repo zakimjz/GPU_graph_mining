@@ -1,0 +1,11 @@
+ - GPGPU -> GPU
+
+ - add pseudocode of host version of GSpan: write the pseudocode in such a way that we can show the replacements
+
+ - clearly stating 
+
+ - \subsection{GPU and Parallel Primitives}: describe parallel
+   primitives, provide a citation. Not a separate chapter, just one
+   line and citation.
+
+ - support function: a function that computes the support of a pattern in the database.

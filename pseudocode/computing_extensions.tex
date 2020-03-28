@@ -1,0 +1,79 @@
+\section{Computing extensions}\label{sec:computing-extension}
+
+Let have a pattern $\pattern$ that needs to be expanded. In order to
+find all extension $\extend_{\db}(\pattern)$, we have to make a lookup
+in the database for each embedding of the current pattern $\pattern$
+and look for the extension set. Let the pattern contains $p$
+vertices. We have $p$ columns $\embedcol_i$ and the right-most path
+$\rmpath^{GPU}(\pattern)$. The $\rmpath^{GPU}(\pattern)$ stores vertex
+ids in the pattern numbering, instead of edge ids. The embeddings are
+in fact multiple linked lists with heads in the last column
+$\embedcol_{p-1}$. There are $|\embedcol_{p-1}|$ embeddings that needs
+to be processed. The reconstruction of the embeddings can be done only
+from the last column. Each vertex on the right-most path is assigned
+to one thread, having $|\rmpath^{GPU}(\pattern)| \cdot
+|\embedcol_{p-1}|$. For \emph{forward extension} each thread has to
+check that the new vertex is not already present in the
+embedding. Vertices in the last column also has to check for
+\emph{backward extensions}, i.e., it has to check that the new vertex
+is present on the right-most path.  The founded extensions are stored
+in the array $\extensionarray$. Each element of $\extensionarray$
+contains a tuple $(\texttt{elabel}, \texttt{to},
+\texttt{tolabel})$. The values of starting vertex and its label are
+given by the column and the DFS code.
+
+
+The threads are allocated in column-major order, i.e., threads with
+numbers $1,\ldots, |\embedcol_{0}|$ are assigned to the first column,
+threads $|\embedcol_{0}|+1,\ldots, |\embedcol_{1}|$ to second column,
+etc.  Column-major order causes that many threads can share the same
+vertex on the right-most path and therefore access the same locations
+in global memory: a) the neighborhood; b) the
+embeddings. \localcmnt{robert}{THIS NEEDS TO BE EXPLAINED MUCH MORE
+  SOMEWHERE IN THE TEXT, maybe in the introduction to datastructures
+  !!!}.  The most important feature of checking a neighborhood vertex
+against the whole embedding is that this check is done
+\emph{independently} by each thread, i.e., there is no
+communication. Each thread allocates its right-most path vertex by
+computing the assigned column and following the backlinks.
+
+
+The storage of extensions is performed in four steps: 1) the maximum
+degree $m$ of valid vertex extension for every vertex on the
+right-most path in every embeddings is computed. Then an array
+$\mathbf{V}$ of size $m\cdot |\embedcol_{p-1}| \cdot |\rmpath^{GPU}|$
+for storing validity indices is allocated. The array is initially
+filled with 0. 2) scan the database once and store 1 in $\mathbf{V}$,
+if the extension is valid. 3) compute the prefix scan of $V$. This
+step gives indices into perfectly packed extension array
+$\extensionarray$. 4) store the information about extensions in
+$\extensionarray$ at positions looked-up in $\mathbf{V}$.
+
+The properties of $\extensionarray$ are the following:
+
+\begin{enumerate}
+\item Two threads with adjacent ids $i$ and $i+1$ store the embedding
+  descriptions in the array in adjacent memory positions. From this
+  follows an important property: the extensions are stored in segments
+  that represents right-most path vertices, we denote $k$-th segment
+  by $\extensionarray_k$.
+\item Additionally, in each segment $\extensionarray_k$ vertices from
+  one graph forms blocks inside of the segments. 
+\item The last and very important property of the embedding storage is
+  that its \texttt{row} pointer points to the row which the extending
+  is supposed to be extend. This property is used for forming new
+  embedding columns. All these properties are important for support
+  computation.
+\end{enumerate}
+
+There is one important optimalization: we omit whole columns
+$\embedcol_i$ from the processing, if we know beforehand that all
+extensions from vertices in $\embedcol_i$ are not frequent (see the
+monotonicity principle). Additionally, we have to follow the
+label-based \textbf{CITE !? EXPLAIN !?} pruning of possible
+extensions.
+
+
+
+
+

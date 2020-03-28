@@ -1,0 +1,7 @@
+libglobals.a
+globals_tests
+deps
+objs
+convertdb
+.gdbinit
+

@@ -1,0 +1,97 @@
+
+\newcommand*{\grphA}{
+\begin{tikzpicture}
+\tikzstyle{every node}=[font=\scriptsize]
+\node (V0)    at (0,0) [draw,circle,inner sep=1.5pt,fill]  {};
+\node[right of=V0,node distance=1cm,draw,circle,inner sep=1.5pt,fill] (V1)  {};
+
+\node at (V0) [left=2pt] {$0,A$};
+\node at (V1) [right=2pt] {$1,B$};
+
+\draw (V0) to (V1);
+\end{tikzpicture}
+}
+
+
+
+
+\newcommand*{\grphB}{
+\begin{tikzpicture}
+\tikzstyle{every node}=[font=\scriptsize]
+\node (V5)    at (0,0) [draw,circle,inner sep=1.5pt,fill]  {};
+\node[right of=V5,node distance=2cm,draw,circle,inner sep=1.5pt,fill] (V6)  {};
+\node[below of=V5,node distance=1cm,draw,circle,inner sep=1.5pt,fill] (V7) {};
+\node[right of=V7,node distance=2cm,draw,circle,inner sep=1.5pt,fill] (V8) {};
+\node[right of=V7,yshift=+0.5cm,node distance=1cm,draw,circle,inner sep=1.5pt,fill] (V9) {};
+
+\node at (V5) [left=2pt] {$5,A$};
+\node at (V6) [right=2pt] {$6,B$};
+\node at (V7) [left=2pt] {$7,B$};
+\node at (V8) [right=2pt] {$8,E$};
+\node at (V9) [right=2pt] {$9,E$};
+
+\draw (V5) to (V6);
+\draw (V6) to (V8);
+\draw (V5) to (V7);
+\draw (V8) to (V7);
+\draw (V7) to (V9);
+\end{tikzpicture}
+}
+
+
+
+\newcommand*{\grphC}{
+\begin{tikzpicture}
+\tikzstyle{every node}=[font=\scriptsize]
+\node (V10)    at (0,0) [draw,circle,inner sep=1.5pt,fill]  {};
+\node[right of=V10,node distance=2cm,draw,circle,inner sep=1.5pt,fill] (V11)  {};
+\node[below of=V10,node distance=1cm,draw,circle,inner sep=1.5pt,fill] (V12) {};
+\node[right of=V12,node distance=2cm,draw,circle,inner sep=1.5pt,fill] (V13) {};
+\node[right of=V12,node distance=1cm,draw,circle,inner sep=1.5pt,fill] (V14) {};
+
+\node at (V10) [left=2pt] {$10,A$};
+\node at (V11) [right=2pt] {$11,B$};
+\node at (V12) [left=2pt] {$12,C$};
+\node at (V13) [right=2pt] {$13,D$};
+\node at (V14) [above=-1pt] {$14,E$};
+
+\draw (V10) to (V11);
+\draw (V11) to (V13);
+\draw (V10) to (V12);
+\draw (V11) to (V12);
+\draw (V12) to (V14);
+\end{tikzpicture}
+}
+
+
+
+
+\newcommand*{\grphD}{
+\begin{tikzpicture}
+\tikzstyle{every node}=[font=\scriptsize]
+\node (V18)    at (0,0) [draw,circle,inner sep=1.5pt,fill]  {};
+\node[left of=V18,node distance=1cm,draw,circle,inner sep=1.5pt,fill] (V15)  {};
+\node[above of=V18,node distance=1cm,draw,circle,inner sep=1.5pt,fill] (V16) {};
+%\node[right of=V14,yshift=1cm,node distance=1cm,draw,circle,inner sep=1.5pt,fill] (V17) {};
+\node[left of=V18,yshift=1cm,node distance=1cm,draw,circle,inner sep=1.5pt,fill] (V17) {};
+
+
+\node at (V18) [right=2pt] {$18,A$};
+\node at (V15) [left=2pt] {$15,B$};
+\node at (V16) [right=-1pt] {$16,C$};
+%\node at (V17) [right=2pt] {$17,D$};
+\node at (V17) [left=2pt] {$17,E$};
+
+%\draw (V14) -- node[below=-3pt] {a} (V15);
+\draw (V18) -- (V15);
+\draw (V18) to (V16);
+\draw (V18) to (V17);
+\draw (V15) to (V17);
+\end{tikzpicture}
+}
+
+
+
+
+
+

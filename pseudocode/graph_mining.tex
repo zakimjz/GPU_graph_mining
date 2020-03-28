@@ -1,0 +1,48 @@
+\section{Graph mining}
+
+In this section, we overview the GSpan algorithm~\cite{gspan}. The
+input to the algorithm is a database(multiset) of graphs
+$\db=\{\G_i\}, \G_i=(\V_i, \E_i)$ and a parameter
+$\minsupp\in\natnum$. The GSpan algorithm outputs such graphs patterns
+$\pattern=(\V_\pattern, \E_\pattern)$ that are subgraph isomorphic
+with at least $\minsupp$ graphs $\G_i$ in the database. The GSpan
+algorithm is the depth-first search algorithm. There are many variants
+on the GSpan algorithm. We describe a variant that is suitable for our
+purposes. As usually in the frequent pattern mining, the algorithm
+grows the pattern by extensions that are collected from the
+database. The information of pattern occurance is hold in main memory
+in the form of mapping (called \emph{embedding}) from $\pattern$ into
+a particular $\G_i$ in the database. All frequent pattern mining
+algorithms have to find a unique string representation of the
+pattern. The reason is that the frequent pattern algorithms in fact
+expand this string representation by ``letters'' describing the
+smallest pattern part. In our case, the letter is defined to be a
+five-tuple describing one edge $(\vrtx_i, \vrtx_j, \lbl_i, \lbl_{ij},
+\lbl_j)$ such that $\vrtx_i, \vrtx_j\in \V_\pattern,
+(\vrtx_i,\vrtx_j)\in\E_\pattern$. A string
+$S=(s_1,\ldots,s_{|\E_\pattern|}), s_\ell=(\vrtx_i, \vrtx_j, \lbl_i,
+\lbl_{ij}, \lbl_j)$ that is created from $\pattern$ is called the DFS
+code. For ordering relation $<$ of the DFS codes,
+see~\cite{gspan}. However, for the algorithm, we need a \emph{unique
+  DFS code}. Let $S',S$ are two DFS codes representing
+$\pattern$. $S'$ is a \emph{unique DFS code} if and only if $S'< S$
+for all $S$ such that $S\neq S'$. We denote $S'$ by
+$\mindfscode(\pattern)$. The right-most path $\rmpath(\pattern)$ in
+the pattern $\pattern = (\V, \E)$ are the indices of elements in
+$\mindfscode(\pattern)$ representing the edges on the shortest path
+from $\vrtx_0 \in \V$ to vertex $\vrtx_{|\V|} \in \V$.
+
+The algorithm expands $\pattern$ only by edges that results in minimal
+DFS code. Such approach guarantees that we do not generate one
+$\pattern$ multiple times. In order to find the extensions, we have to
+do a database scan. 
+
+
+
+Our method have the same schema but it runs the two following
+operations in parallel: 1) collection of the extensions; 3) support
+computation; 2) expanding of the embedding. We do not execute the
+minimality checking in parallel as there is not enough paralellism in
+the operation.
+
+

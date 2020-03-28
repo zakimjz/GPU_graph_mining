@@ -1,0 +1,61 @@
+
+1) forward forward intersection:
+   Populates both input embedding_extension_t elements using one kernel. Need to split up. (DONE...)
+
+
+2) get support for extensions:
+
+   Create a flag array for denoting support for each graph in the db ( or max graph in the extension column)
+   Write a kernel that will allow vertices from the same graph to turn corresponding flag on. 
+   Perform a reduce operation to get the support from the flag array.
+
+2) FWD-FWD operation can make  as a by product FWD-BWD extension.
+
+   the FWD-BWD operation does not need to be implemented, because the
+   get_all_extensions gets all the backward extensions. Additionally,
+   the fwd-fwd operation can as a by-product produce the fwd-bwd
+   extension. Meaning that the amortized costs of the fwd-fwd
+   operation will be lower then the cost of the fwd-fwd operation
+   without using the fwd-bwd operation.
+
+3) bugfix: extension_element_t comparator did not use row for comparison !!!!!
+   BECAUSE OF THIS BUGFIX, WE HAVE TO RE-DO ALL MEASUREMENTS. THE SPEEDUP WILL BE PROBABLY GREATER ...
+
+4) BWD_FWD Intersection improvement:
+   In the bwd_fwd intersection the fwd_fwd intersection is performed between the filtered backlink offsets 
+   of the bwd extensions and the fwd extensions. It should be modified to do just an additional filtering 
+   on the fwd extensions instead of using the fwd_fwd intersection.
+
+5) In get_support_for_fwd_ext:
+   Remove max_vertex_id from the parameter, pass cuda_graph_database; max_vertex_id and db_size must be picked up by the function from there.
+
+6) all CUDAMALLOC's should be revised so we do not allocate memory
+   over and over again. Large arrays can be kept and reallocated only
+   when the array is not large enough.
+
+   - create a static(?) variable that holds the array pointer and its
+     size. When the actual size is less then the needed size => reuse
+
+   - do this after we get rid of the merge sort. The reason is that it
+     seems that a lot of time spent in the merge sort is actually
+     memory allocation.
+
+   candidates for revision:
+   a) compute_extensions.cpp:      get_all_extensions
+      - all CUDAMALLOC and CUDAFREE
+
+   b) compute_support.cpp
+      CUDAMALLOC(&d_fwd_flags, sizeof(int) * num_fwd_combinations, *logger);
+      CUDAMALLOC(&d_bwd_flags, sizeof(int) * num_bwd_combinations, *logger);
+
+      // Write the DFS element in the corresponding position of the flag
+      CUDAMALLOC(&d_fwd_block_dfs_array, sizeof(DFS) * num_fwd_combinations, *logger);
+      CUDAMALLOC(&d_bwd_block_dfs_array, sizeof(DFS) * num_bwd_combinations, *logger);
+
+      // DFS elements can't be more than the exts_array_length, so this is enough to hold all the extensions.
+      CUDAMALLOC(&d_dfs_array, sizeof(DFS) * exts_array_length, *logger);
+
+
+ 7) instead of coppying the last element in the indice array, we can compute the 0/1 on host and OMIT THE CALL TO cudaMemCpy !!!
+
+

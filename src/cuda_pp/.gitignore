@@ -1,0 +1,10 @@
+cuda_scan_test
+objs
+deps
+attic
+libcudapp.a
+cuda_configurator_test
+.gdbinit
+libgspanseq.a
+
+

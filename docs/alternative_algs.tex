@@ -1,0 +1,117 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{a4wide}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{latexsym}
+\usepackage[czech]{babel}
+\usepackage{graphicx}
+\usepackage{pstricks}
+\usepackage{verbatim}
+\usepackage{amssymb}
+\usepackage{colortbl}
+\usepackage{tikz}
+\usepackage{pgf}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{multirow}
+
+%\usepackage{myshortcuts}
+
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\newtheorem{proposition}[definition]{Proposition}
+
+
+\bibliographystyle{plain}
+
+\title{Outlier detection in network traffic}
+\date{}
+
+
+\begin{document}
+
+\noindent Problems:
+\begin{enumerate}
+\item (probably) There will be a lot of diverging branches, i.e., a lot of threads having different value of a condition.
+\item (probably) Bad memory access pattern.
+\end{enumerate}
+
+Input: graph $G$; pattern $P=(d_1,d_2, \ldots, d_n)$. $P$ is given as DFS code.
+
+
+\begin{algorithm}
+\caption{\textsc{Prepare-BFS-Kernel}}
+\label{alg:compute-support}
+\vbox{\textsc{Prepare-BFS-Kernel}(Database graph $G_D$, Number of patterns $N_P$)}
+\begin{algorithmic}[1]
+\STATE Compute $m_e$, the max number of edges with labels that corresponds to edges in $P$
+\STATE Allocate $L_1,\ldots, L_{|P|}, |L_i|=m_e$ for each running kernel.
+\STATE Allocate array $F_{ound}$ of $|D|\cdot N_P$ integers and set them to 0.
+\RETURN $s$
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{\textsc{Check-One-Graph}}
+\label{alg:compute-support}
+\vbox{\textsc{BFS-kernel}(Database graph $G_D$, Pattern $P$)}
+\begin{algorithmic}[1]
+\FOR{each edge $e$ in $G_D$ that corresponds to $d_1$}
+\STATE store the edge in an array $L_1$.
+\ENDFOR
+\FOR{$\forall i, i\in\{2,\ldots, |P|\}$}
+\FOR{each edge $e$ in $G_D$ that corresponds to $d_i$}
+%\FOR{$\foreach e'\in L_{i-1}$}
+\STATE loop over $L_j, j < i$ and check whether $e$ is a valid extension.
+\STATE \textbf{if} $e$ is valid \textbf{then} store the edge in an array $L_i$.
+\STATE \textbf{if} there are no valid extensions \textbf{then}  exit.
+%\ENDFOR
+\ENDFOR
+\ENDFOR
+\STATE Store $1$ on the position that corresponds to $G_D$ and $P$ in $F_{ound}$.
+\RETURN $s$
+\end{algorithmic}
+\end{algorithm}
+
+\noindent Some observations:
+\begin{enumerate}
+\item The arrays $L_i$ for each combination of database graph and pattern will be filled differently
+  $\Rightarrow$ each thread loops different number of times.
+\item Construction of patterns: how big is $N_P$ ? It can be huge, or we have to somehow reduce the
+  number of generated patterns. In the worst case there $N_P = N_e\cdot N^{prev level}_P$ patterns,
+  where $N_e$ is the number of frequent edges and $N^{prev level}_P$ is the number of patterns on
+  previous level. \emph{This is quite a problem}
+
+\item Note to the previous note: it is probably possible to avoid having huge arrays. The patterns
+  can be stored in a prefix tree in similar way as the embeddings in our current method.
+
+\item In any case: each kernel is accessing different parts of the memory with stored graph
+  $G_D$. The memory locations are disjunct (having no intersections). So each kernel execution
+  results in reading the whole database.
+\item each kernel reads the whole database at least $|P|$-times !
+
+%\item Note to the previous note: it is probably possible to avoid having huge arrays, but then it is
+%  going to be as complex as our current method with more complicated kernel for testing isomorphism.
+%  In order to construct an array of all patterns there will be huge amount of device-device
+%  transfers: copy the original pattern and add one edge. Or we have to construct a prefix tree in
+%  the same way as we are storing the embeddings. 
+\item Either way: the number of possible extensions can be potentially quite huge, even if we try
+  hard to reduce it. 
+\item \textbf{Collection of possible extensions for one pattern means checking isomorphism in one graph and
+  find all extensions, which is in fact the same as computing the support of a pattern.}
+\end{enumerate}
+
+\noindent Memory: $K$ is the number of concurently executing kernels. $N_P$ is the number of candidate patterns. Then we need $O(m_e\cdot K\cdot |P|)$ memory.
+
+
+\end{document}
+
+

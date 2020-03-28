@@ -1,0 +1,174 @@
+\section{Computation of support}
+%\noindent Let have two graphs $\G=(V,E), \G'=(V',E')$ such that
+%$\G\subseteq \G'$. 
+
+\textbf{A sequence of nodes for recording the dfs code is fine but
+  missing is the first node in ${\cal Q}$!}
+
+\emph{gaston-like representation using arrays:} let have a pattern
+$\pattern$. The representation of embeddings $\bigcup_{\G'\in\db}
+\embed(\pattern, \G')$ can be done be using vector ${\cal Q} =
+(Q_0,Q_1,\ldots,Q_n), n = |\mindfscode(\G)|$ where for $i\geq 1$
+each $Q_i = ((idx_{1}, vid_{1}, gid_{1}), \ldots, (idx_{\ell},
+vid_{\ell}, gid_{\ell}))$ is a vector and $idx_j$ corresponds to an
+index into $Q_{i-1}$, $gid_j$ corresponds to the index of the graph
+$\G_{gid_j}\in\db$, and $vid_j\in V$.  The first element of
+${\cal Q}$, the $Q_0$, is special: it is the first node of the
+embedding. $Q_0$ therefore has initialized only $vid_j$ and
+$gid_j$. The $idx_j$ of $Q_0$ is uninitialized or set to $-1$. The
+elemens $Q_1, \ldots, Q_n$ of ${\cal Q}$ are associated with
+$\mindfscode(G)=(c_1,\ldots, c_{|E|})$ that describes the columns,
+i.e., $i$th column $Q_i$ corresponds to $c_i$. This representation
+should have smaller size in the memory then the naive representation
+(see later), but the memory access seems to be worse then in the
+previous case.
+
+\emph{Naive representation of embeddings:} let have a pattern
+$\pattern$. The representation of the embeddings
+$\bigcup_{\G'\in\db}\embed(\pattern,\G')$ can be done using a
+vector ${\cal Q}=(Q_0, Q_1,\ldots, Q_n)$ of size $n$ and each $Q_i$ of
+size $m=|\bigcup_{\G'\in\db} \embed(\pattern, \G')|$, i.e.,
+${\cal Q}$ corresponds to a $n\times m$ matrix. We omit the structure
+of each $Q_i$, it is similar to the gaston-like representation.  We
+will keep the representation as a vector of vectors for practical
+reasons: this representation of matrix allow us to describe both
+representation of embedings (naive+gaston).
+
+\begin{definition}
+\textbf{still may be incorrect}
+Let have a pattern $\pattern = (V_\pattern, E_\pattern)$ with
+canonical code $\mindfscode(\pattern) = (c_1, \ldots,
+c_{|E_\pattern|})$ and the right-most path $\rmpath$ associated with
+$\mindfscode(P)$. Let $V_\rmpath$ are all the nodes in the pattern on
+the right-most path. Let have a graph $G=(V,E)$. Let
+$\G'=(V',E')\subseteq \G$ be one embedding of $\pattern$. Let
+the function $f$ maps nodes from $V'$ into $V_\pattern$.
+
+\begin{enumerate}
+\item Backward extensions of one such embedings are the 5-tuples
+  $(f(v_i), f(v_j), l_i, l_{ij}, l_j)$ such that $f(v_i), f(v_j)$ is on the
+  right-most path of $\mindfscode(P)$.
+\item Forward extensions are the 5-tuples $(f(v_i), v_{|V|+1}, l_i,
+  l_{ij}, l_j)$, such that $f(v_i)$ is on the right-most path and
+  $v_{|V|+1}\not\in V'$
+\end{enumerate}
+
+\noindent We will denote the extensions for one graph $G$ by $\extend(\pattern,
+\G)$. The extensions of $\mindfscode(\pattern)$ in a database $\db$ is the
+union of extensions $\bigcup_{\G\in\db} \extend(\pattern, \G)$,
+denoted by $\extend(\pattern, \db)$.
+
+
+%\noindent The inverse function $f^{-1}$ returns a set of vertices. Then the
+%frontier of the pattern $\pattern$ in the database $\db$ is
+%$\bigcup\{f^{-1}(v') | X=(v, v', \in \extend(\pattern, \db), \text{X is
+%  forward}\}$
+
+\end{definition}
+
+It does not make sense to define the frontier in the same fasion as
+for the BFS search of a graph. Rather, we use the notion of extensions
+of a pattern. The frontier is in fact part of ${\cal Q}$, i.e., the
+$Q_i$ that corresponds to the canonical code elements on the
+right-most path.
+
+Discussion: instead of having $gid$ in the vectors $Q_i$, we can
+assign each node of the graph $G\in \db$ a unique id. However the
+tuple $(vid,gid)$ represent such a unique id. What is better ? Unique
+vertex id is hard to map to a particular node in some graph in $\db$.
+
+
+\begin{enumerate}
+\item The database $\db$ is stored using the sparse-matrix
+  representation.
+\item \textbf{HOW THE EXTENSIONS $\extend(\pattern,G')$ OF A PATTERN
+  $\pattern$ SHOULD BE REPRESENTED?}  I mean using ``general'' edges,
+  i.e., both vertex labels + edge label or full edge information:
+  vertex labels, edge labels + ids of vertices and edge. \emph{Answer:
+  } the labels of edge, and both vertices is stored in the canonical
+  code.
+\item \textbf{how to find out that the new edge in some graph $G\in
+  \db$ does not connect to other node in the pattern?} Scan the
+  corresponding elements of the columns in ${\cal Q}$. Here the naive
+  representation will be better !
+\item \textbf{a really big problem: } the threads allocated to columns
+  do not know, whether is element belongs to the embeding or not. From
+  this point of view, the naive representation is better.
+\end{enumerate}
+\bigskip
+
+\begin{algorithm}[!htb]
+\caption{Helper function that maps thread index on two indexes: $qidx$
+  representing the column index vector of embeddings $Q$ and $qidx'$
+  representing the index in the $qidx$-th column}
+
+\vbox{\textsc{ComputeIdx}(\vtop{\noindent Embeddings ${\cal Q}$, Right-most path $RMP=(r_1,\ldots,r_x)$, Integer i,
+      \par\noindent (Out)Index qidx, (Out)Index qidx')}}
+\begin{algorithmic}[1]
+     \STATE $s\leftarrow 0$
+     \STATE $qidx\leftarrow 0, qdix'\leftarrow 0$
+     \FOR{$k=1,\ldots, x$}
+        \IF{$s + |Q_{r_k}| > i$}
+        \STATE $qidx\leftarrow r_k, qidx'\leftarrow i-s$
+        \STATE \textbf{break}
+        \ELSE
+        \STATE  $s\leftarrow s + |Q_{r_k}|$
+        \ENDIF
+     \ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[!htb]
+\caption{Pseudocode of the support computation for edges on GPU}
+\vbox{\textsc{GetCodeExtensions}(\vtop{\noindent Database $\db$, 
+                                \par\noindent Canonical code $C$,
+                                \par\noindent Embeddings ${\cal Q}$,
+                                \par\noindent Right-most path ${\cal R}=(r_1,\ldots,r_x)$)}}
+\begin{algorithmic}[1]
+  \REQUIRE ${\cal Q} = (Q_0, Q_1, \ldots, Q_{|C|})$
+%  \REQUIRE for each $G\in \db$ the set $E$ contains all embeddings, i.e., $\extend(C,G)\subseteq E$.
+  \REQUIRE Right-most path of $C$ is stored in thread-local memory,
+           denoted by ${\cal R}=(r_1,\ldots,r_x)$. each $r_i$ is an index into
+           ${\cal Q}$.
+  \STATE host computes the number of edges in the old frontier
+         $f=\sum_{i=1}^x|Q_{r_i}|$ (\emph{parallel-reduction} or maybe
+         sequentially on host)
+  \STATE host allocates device-array $E_{\text{offsets}}$ of size $f+1$.
+  \FORPARALLEL{all threads $\thread_i, 1\leq i \leq f$} 
+  \STATE $qidx\leftarrow 0, qdix'\leftarrow 0$
+  \STATE call \textsc{ComputeIdx}$({\cal Q}, {\cal R}, i, qidx, qidx')$ \emph{// compute the position in ${\cal Q}$ of the current thread}
+  \STATE $E_{\text{offsets}}[i]\leftarrow |Q_{qidx}[qidx']|$
+  \STATE all threads perform exclusive-scan operation on
+         \textbf{the whole} $E_{\text{offsets}}$, filling $E_{\text{offsets}}[f+1] !$ \par(\textbf{requires
+         barrier before+after scan})
+  \ENDFOR
+  \STATE host reads $n\leftarrow E_{\text{offsets}}[f+1]$ from device ($n$ is the size of new frontier)
+  \STATE host allocates array $E_{\text{data}}$ in device-memory of size $n$
+  \FORPARALLEL{all threads $\thread_i, 1\leq i \leq f$}
+     \STATE $qidx\leftarrow 0, qdix'\leftarrow 0$
+     \STATE call \textsc{ComputeIdx}$({\cal Q}, {\cal R}, i, qidx, qidx')$
+
+     \STATE $k_1\leftarrow E_{\text{offsets}}[i], k_2\leftarrow E_{\text{offsets}}[i+1]$
+\medskip
+
+     \STATE store in device-global memory $E_{\text{data}}[k_1],\ldots,E_{\text{data}}[k_2-1]$
+            the tuple $(l_i, l_{ij}, l_j, b, \ell, v, g)$ \par where
+            $l_i,l_{ij}, l_j$ are the labels corresponding to neighborhoods
+            of\par\noindent $(\ell,v,g)=Q_{qidx}[qidx']$, the $b$ is set to $1$
+            if it is backward edge and to $0$ otherwise.
+
+\medskip
+     \STATE sort the array $E_{\text{data}}$, the operator $<$ is defined on the
+            label and $b$ part of each array element.
+\medskip
+
+     \STATE prefix-sum segmented inclusive prefix-scan of $E_{\text{data}}$ (frontier of the
+            segmented scans: if the labels+$b$ in $E_{\text{data}}[i]$ and $E_{\text{data}}[i+1]$ differs)
+            1) where to store this ? 2) this should give the support of the
+            extensions
+
+  \ENDFOR
+  \STATE deduplicate extensions+remove extensions(edges) that were already used by the pattern $E_{\text{data}}$. How !?
+\end{algorithmic}
+\end{algorithm}
+

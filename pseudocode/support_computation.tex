@@ -1,0 +1,71 @@
+\section{Support computation}
+
+Support computation must be split into two parts: 1) extraction of
+extensions from the extension array; 2) computation of support for
+each extension;
+
+\noindent\textbf{Extract extensions:} we extract extensions
+segment-by-segment. We allocate array of size $|\allvlabels|\times
+|\allelabels|$ and execute $|\extensionarray_i|$ threads that store
+0/1 flags in this array that represents whether a particular
+combination of $(\elabel, \vlabel)\in \allvlabels\times \allelabels$
+exists in the $i$-th segment.
+
+\noindent\textbf{Support computation of extensions:} We describe
+computation in one segment of $\extensionarray$. Computing supports of
+extensions in all segments in parallel is similar using segmented
+reduce/scan operations. From the properties of the $\extensionarray$
+described in Section~\ref{sec:computing-extension} follows that in the
+segments are block of vertex ids belonging to one graph and there is
+one such block per segment. Therefore, by creating array of 0/1
+indices by putting 1 on the end of the block. Scanning this array
+results in mapping stored in array $\mathbf{M}$ of the sparse database
+graph ids into a continuous range. The support computation proceeds as
+follows: let have $n$ extensions and the number of graphs in the
+segment is $g$. We allocate array $\mathbf{S}$ of size $n\cdot g$
+allocating for $i$-th extension $i$-th block of size $g$. We then
+execute $n\cdot g$ threads each assigned to an extension. Each thread
+stores 1 in a block corresponding to its assigned extension at a
+position looked up in $\mathbf{M}$. The final supports are then
+computed by executing parallel segmented reduction in array
+$\mathbf{S}$ with segments of size $g$. This can be parallelized even
+more, by processing many segments at once.
+
+
+
+\textbf{There is missing a lot of notation that make the text more
+  clear and more concise. Additionally, we need to explain why we need
+  to collect values $\allvlabels\times \allelabels$.}
+
+
+
+\subsection{Growing the embeddings}
+
+After we know the frequent extensions, we have to transform the
+information from the extension array into a new column $\embedcol$ or
+process some existing column. We have to consider two cases:
+
+\textbf{(1) Forward extensions: } Forward extensions introduce new
+vertex into the pattern and therefore introduce new column. The column
+is extracted directly from one segment of $\extensionarray$, by
+copying the needed information to a new column $\embedcol$ and
+\emph{add} the new column to the embeddings.
+
+
+\textbf{(2) Backward extensions: } backward extensions do not
+introduce new vertex into the pattern. The backward extensions can
+only filter the last column in the embeddings. There are two reason:
+we consider only simple graphs and 2) the principle of
+monotonicity. The last column is filtered against the \texttt{row}
+field of some elements in $\extensionarray$ in the following way:
+allocate a vector $\mathbf{F}$ of the same size as is the size of last
+column and store there 0. Execute $|\mathbf{F}|$ threads, thread with
+index $i$ stores 1 in $\mathbf{F}[i]$ if there exists a backlink from
+elements of $\extensionarray$. Then execute parallel scan in
+$\mathbf{F}$, which gives the new positions in the filtered
+column. Finally copy the information from the last column into new
+column and \emph{replace} the last column in the embeddings while
+\emph{retaining} the original last column.
+
+
+

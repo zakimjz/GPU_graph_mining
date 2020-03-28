@@ -1,0 +1,9 @@
+libreduction.a
+deps
+objs
+attic
+reduction_test
+scan_test
+copy_test
+all_tests
+

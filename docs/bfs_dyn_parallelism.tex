@@ -1,0 +1,119 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{a4wide}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{latexsym}
+%\usepackage[czech]{babel}
+\usepackage{graphicx}
+\usepackage{pstricks}
+\usepackage{verbatim}
+\usepackage{amssymb}
+\usepackage{colortbl}
+\usepackage{tikz}
+\usepackage{pgf}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{multirow}
+
+%\usepackage{myshortcuts}
+
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}[definition]{Theorem}
+\newtheorem{lemma}[definition]{Lemma}
+\newtheorem{corollary}[definition]{Corollary}
+\newtheorem{proposition}[definition]{Proposition}
+
+
+\bibliographystyle{plain}
+
+\title{Reconstructing the embeddings (without storing them)}
+\date{}
+
+
+\def\pattern{P}
+\def\patternset{\mathcal{P}}
+\def\edge{e}
+\def\graph{G}
+\def\db{D}
+\def\bigoh{\mathcal{O}}
+
+\begin{document}
+
+\maketitle
+
+In this discussion, we try to argument against not storing the embeddings.
+That is, the graph mining algorithm generates the pattern tree in a DFS or BFS fashion (the FSG approach) and the support is checked so the GPU recomputes the isomorphisms from scratch.
+This situation actually fits on the all approaches that do not store the embeddings, an example of these are the:
+1) graph mining on GPUs using dynamic parallelism; or
+2) the FSG approach.
+From the discussion it should be clear that not storing the embeddings is not an option.
+
+
+We denote a database of graphs by $\db=\{\graph\}$.
+Let have a pattern $\{\pattern\}$ of size $k$ and an edge $\edge$ that extends the pattern $\pattern$.
+Now, we want to check an isomorphism of $\pattern$ in all graphs of $\db$ on the GPU, not having the embeddings of a sub-pattern of size $k-1$.
+In order to check the isomorphism of $\pattern$, we have to reconstuct all the embeddings of size $<k$.
+We start construction of the pattern $\pattern$ from a pattern that contains single edge, we do the following on iteration $i \leq k$:
+1) extend the current pattern  $\pattern_i, |\pattern_i| = i$ by one edge constructing pattern $\pattern_j, |\pattern_j|$.
+2) check the isomoprhism of $\pattern_j$ in the whole database.
+
+The second step is noticable: the embedding of the first edge of pattern $\pattern$ is constructed $|\pattern|=k$ times.
+The embedding of the second edge is constructed $(k-1)$-times, etc.
+If we have a set of patterns $\patternset$ of size $k$, we have to compute the support of each pattern of size $<k$ in the database.
+That means that for every pattern $\pattern\in\patternset$ the support has to be computed and that means that the embedding of the edge at position $i$ in the pattern is constructed $\bigoh(k-i)$ times.
+
+We can consider that we are checking set of patterns $\patternset$ in one graph of $\graph\in\db$.
+One thread is checking isomorphism of one $\pattern\in\patternset$.
+Then the following is happening:
+while we are reconstructing the embedding (recursively or not) of each $\pattern\in\patternset$ each thread is basically executing its own set of instructions even that they share the same program.
+The reason is that the patterns in $\patternset$ can be located on different parts of the graph $\graph$.
+This is pretty bad for the GPU.
+
+In order to extend the set of patterns $\patternset$ by one edge, we have:
+1) count the number of extension and allocate the array that stores the extensions;
+2) copy the extensions into the array.
+\emph{That means executing the kernel for isomorphism check two times!}
+
+
+In our implementation, we are using relatively efficient GPU kernels and do not recompute the embeddings for every new pattern.
+The overhead of all the reductions and parallel scan operations is amortized for a whole subtree of patterns.
+The opposite is true for the graph miner that will recompute the embeddings for each new pattern.
+Therefore, if we take a look at the experiment with bug-reintroduced kernel, see Fig.~\ref{fig:bug-reintroduced}, the execution time for any approach that recomputes the embeddings is going to be worse then our implementation.
+
+The speedup of the GPU graph miner on a protein dataset is about 8.5 on the correct assignment of the indexes and about 5.5 on the incorrect assignment of the indexes.
+This actually shows one important thing: if we execute support computation of one graph (DFS approach) against the whole database, the results will be very bad.
+The support computation proceeds as follows: one thread is checking the isomorphism in one graph (recomputing the embeddings from scratch).
+However, that means that each thread is accessing different memory locations on the GPU.
+There comes the connection with the bug-reintroduced implementation:
+the problem with index assignments, see Fig.~\ref{fig:bug-reintroduced}, is just slightly worse then the correct assignemnt of the indexes to the arrays.
+The reason is that the size of each graph is much larger then couple of integers.
+
+
+
+\begin{figure}
+\centering
+\begin{tabular}{cccccccccccc}\hline
+index:  & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 \\ \hline
+thread: & 0 & 0 & 0 & 1 & 1 & 1 & 2 & 2 & 2 & 3 &  3 \\ \hline
+\end{tabular}
+
+\bigskip
+\begin{tabular}{cccccccccccc}\hline
+index:  & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 \\ \hline
+thread: & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 &  0 \\ \hline
+\end{tabular}
+\caption{Thread assignment. The upper figure shows the incorrect way
+  of threads assigned to indexes of an array. The bottom figure shows
+  the correct way of assigning the threads to indexes of an array.
+}\label{fig:bug-reintroduced}
+\end{figure}
+
+
+
+\end{document}
+

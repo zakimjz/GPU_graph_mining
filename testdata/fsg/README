@@ -1,0 +1,27 @@
+The generator produces a set of simple graphs (no loops and no
+multiple edges) to the standard output.  Both edges and vertices may
+be labeled.  If you execute the command without any arguments, it will
+show the list of options.  For example, the next line will produce
+10000 graph transactions to the standard output:
+
+    ./ggen -D10000 -L200 -E40 -V40 -i6 -T10 -S
+
+The meaning of those options are shown below (in general, those
+options should correspond to the notation appeared in my ICDM'01 paper
+and technical report 02-026, 2002):
+
+    -D N    produce N transactions
+    -E N    use N distinct edge labels
+    -i N    the average size of frequent patterns (c.f. -L)
+    -L N    use N frequent patterns as possible frequent graphs
+    -S      put frequent patterns as much as possible into each 
+            transaction by overlapping them.  Without this option, the
+            resulting transactions would contain fewer number of
+            frequent patterns specified with the -L and -i options 
+            in them.
+    -T N    the average transaction size
+    -V N    use N distinct vertex labels
+    -s N    use N as the seed for the pseudo-random number generator.
+
+The output format is described in the PAFI manual available from
+http://www-users.cs.umn.edu/~karypis/pafi/index.html
